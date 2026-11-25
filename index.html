@@ -559,6 +559,33 @@ html[data-pal="f"] .door.sof::after { right: 18px; bottom: 16px; width: 110px; h
 html[data-pal="f"] body { background-color: var(--bg); background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='72' height='108' viewBox='0 0 72 108'><path d='M36 0 72 54 36 108 0 54Z' fill='none' stroke='%23b8903f' stroke-opacity='.12' stroke-width='1.2'/><path d='M36 30 52 54 36 78 20 54Z' fill='%23c9a14f' fill-opacity='.05'/></svg>"); background-size: 72px 108px; }
 html[data-pal="f"] .studio { background: transparent; }
 .doors.one { grid-template-columns: 1fr !important; max-width: 560px; }
+/* ---------- Shop ---------- */
+.shop { display: grid; gap: 22px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+.pcard { display: grid; gap: 12px; align-content: start; padding: 24px; background: var(--surface); border: 2px solid var(--edge); border-radius: 16px; box-shadow: 4px 4px 0 var(--edge); }
+.pcard h3 { font-size: 1.5rem; letter-spacing: .04em; }
+.pcard .price { font-family: var(--body); font-weight: 700; font-size: 1.1rem; }
+.pcard .price small, .tot small { display: block; font-weight: 400; font-size: .8rem; color: var(--muted); }
+.pcard .acts { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 6px; }
+.note { font-size: .86rem; color: var(--muted); }
+.note.warn { padding: 12px 16px; border: 2px dashed var(--edge); border-radius: 12px; background: var(--surface); }
+.buy { display: grid; gap: 18px; max-width: 720px; margin-inline: auto; }
+.buy fieldset { border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px 18px; display: grid; gap: 14px; background: var(--surface); }
+.buy legend { padding: 0 8px; font-family: var(--body); font-weight: 700; font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; }
+.buy .two { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.opr { display: grid; gap: 10px; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) auto; align-items: end; }
+.opr .mini { min-height: 48px; padding: 0 14px; cursor: pointer; font: inherit; }
+@media (max-width: 560px) { .opr { grid-template-columns: 1fr; } }
+.radios { display: flex; gap: 12px; flex-wrap: wrap; }
+.radios label { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border: 2px solid var(--edge); border-radius: 999px; background: var(--surface); cursor: pointer; font-family: var(--body); font-weight: 600; font-size: .9rem; letter-spacing: 0; text-transform: none; }
+.radios input { width: 18px; min-height: 0; height: 18px; }
+.tot { font-family: var(--body); font-weight: 700; font-size: 1.2rem; }
+.err { color: #a3261f; font-weight: 600; font-size: .92rem; min-height: 1.2em; }
+.lic { display: grid; gap: 10px; padding: 20px; background: var(--surface); border: 2px solid var(--edge); border-radius: 16px; box-shadow: 4px 4px 0 var(--edge); margin-bottom: 18px; }
+.lic code { font-size: 1.05rem; letter-spacing: .06em; word-break: break-all; padding: 6px 10px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; }
+.lic ul { margin: 0; padding-left: 1.2em; font-size: .9rem; color: var(--muted); }
+.lic .acts { display: flex; gap: 10px; flex-wrap: wrap; }
+.st { display: inline-block; padding: 2px 10px; border-radius: 999px; border: 1px solid var(--edge); font-size: .74rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+#checkout { min-height: 300px; }
 </style>
 </head>
 <body>
@@ -618,6 +645,8 @@ html[data-pal="f"] .studio { background: transparent; }
       <a href="#/note-legali">Note legali</a>
       <a href="#/privacy">Privacy policy</a>
       <a href="#/cookie">Cookie policy</a>
+      <a href="#/condizioni">Condizioni di licenza</a>
+      <a href="#/account">Area clienti</a>
       <button type="button" id="reopenConsent">Gestione consensi</button>
     </nav>
   </div>
@@ -946,8 +975,188 @@ html[data-pal="f"] .studio { background: transparent; }
       return head({ area: 'sof', crumbs: [['Home', '#/'], ['Software', '#/software'], [title]], eyebrow: 'Area Software', title: title, lead: lead }) + body(inner + ctaContact('sof'));
     } };
   }
-  sofSub('prodotti', 'Prodotti', 'Una scheda per ciascun programma: finalità, destinatari, funzioni principali e modalità di licenza. Sul sito non si acquista: ogni scheda si chiude con una richiesta di informazioni o di dimostrazione.',
-    empty('Schede prodotto in arrivo', 'Qui verranno presentati i programmi con finalità, destinatari, funzioni e modalità di licenza.'));
+  /*SHOP*/
+  /* ---------- Shop software (acquisto diretto) ---------- */
+  var TERMS_VERSION = 'bozza-1';
+  var PRODS = {
+    ARF: { name: 'ARF', plans: ['month', 'year'], desc: 'Scheda descrittiva in arrivo: finalità, destinatari e funzioni principali.' },
+    MONITORAGGIO: { name: 'MONITORAGGIO', plans: ['year'], desc: 'Scheda descrittiva in arrivo: finalità, destinatari e funzioni principali.' },
+    ESISTENZA_VITA: { name: 'ESISTENZA_VITA', plans: ['year'], desc: 'Scheda descrittiva in arrivo: finalità, destinatari e funzioni principali.' }
+  };
+  var PLAN_LBL = { month: 'mensile', year: 'annuale' };
+  var shop = { state: 'idle', prices: {}, pk: null, promise: null };
+  function escH(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function eur(c) { return (c / 100).toLocaleString('it-IT', { style: 'currency', currency: 'EUR' }); }
+  function api(path, opt) {
+    opt = opt || {};
+    var h = { 'Content-Type': 'application/json' };
+    var t = acctToken(); if (opt.auth && t) h['x-token'] = t;
+    return fetch('/api/' + path, { method: opt.body ? 'POST' : 'GET', headers: h, body: opt.body ? JSON.stringify(opt.body) : undefined }).then(function (r) {
+      return r.json().then(function (j) { if (!r.ok) { var e = new Error(j.error || 'errore'); e.code = j.error; e.detail = j.detail; e.status = r.status; throw e; } return j; });
+    });
+  }
+  function loadShop() {
+    if (shop.promise) return shop.promise;
+    shop.promise = api('catalogo').then(function (j) { shop.prices = j.products || {}; shop.pk = j.publishableKey; shop.state = 'ok'; }, function () { shop.state = 'off'; });
+    return shop.promise;
+  }
+  function unit(sku, plan) { var p = shop.prices[sku] && shop.prices[sku][plan]; return p ? p.amount : null; }
+  function priceLine(sku) {
+    if (shop.state === 'off') return 'Prezzo in definizione<small>Anteprima: la vendita online non è ancora attiva.</small>';
+    var out = PRODS[sku].plans.map(function (pl) { var u = unit(sku, pl); return u == null ? '' : eur(u) + ' / operatore / ' + (pl === 'year' ? 'anno' : 'mese'); }).filter(Boolean);
+    return out.length ? out.join('<br>') + '<small>IVA esclusa · prezzo per ciascun Operatore Finanziario</small>' : 'Prezzo in definizione';
+  }
+  function prodottiHtml() {
+    var cards = Object.keys(PRODS).map(function (sku) {
+      var pr = PRODS[sku];
+      return '<article class="pcard"><h3>' + pr.name + '</h3><p>' + pr.desc + '</p><p class="price" data-price="' + sku + '">' + priceLine(sku) + '</p>' +
+        '<p class="note">Abbonamento ' + pr.plans.map(function (x) { return PLAN_LBL[x]; }).join(' o ') + '.</p>' +
+        '<div class="acts"><a class="btn sof" href="#/software/acquista/' + sku + '">Acquista</a><a class="btn line" href="#/contatti">Chiedi informazioni</a></div></article>';
+    }).join('');
+    return head({ area: 'sof', crumbs: [['Home', '#/'], ['Software', '#/software'], ['Prodotti']], eyebrow: 'Area Software', title: 'Prodotti',
+      lead: 'Acquista direttamente online la licenza dei programmi GM. La licenza è per Operatore Finanziario; gli utenti sono illimitati.' }) +
+      body('<div class="shop">' + cards + '</div><p class="note" style="margin-top:22px">Prezzi IVA esclusa. Condizioni di licenza, rinnovo e disdetta: <a href="#/condizioni">leggi le condizioni</a>. Hai già acquistato? <a href="#/account">Area clienti</a>.</p>');
+  }
+  P['/software/prodotti'] = { title: 'Prodotti', html: prodottiHtml, after: function () {
+    loadShop().then(function () { Array.prototype.forEach.call(main.querySelectorAll('[data-price]'), function (el) { el.innerHTML = priceLine(el.getAttribute('data-price')); }); });
+  } };
+
+  function opRow(n, o) {
+    return '<div class="opr"><div class="field"><label>Denominazione Operatore Finanziario</label><input data-op="name" type="text" maxlength="200" value="' + escH(o && o.name) + '"></div>' +
+      '<div class="field"><label>Codice fiscale</label><input data-op="cf" type="text" maxlength="16" autocapitalize="characters" value="' + escH(o && o.cf) + '"></div>' +
+      '<button type="button" class="mini" data-shop="delop" aria-label="Rimuovi operatore">✕</button></div>';
+  }
+  function calcTotal() {
+    var f = main.querySelector('form.buy'); if (!f) return;
+    var sku = f.getAttribute('data-sku'), plan = (f.querySelector('input[name=plan]:checked') || {}).value;
+    var n = f.querySelectorAll('.opr').length, u = unit(sku, plan), el = f.querySelector('.tot');
+    el.innerHTML = u == null ? 'Totale: in definizione' : 'Totale oggi: ' + eur(u * n) + '<small>' + n + ' operatore/i × ' + eur(u) + ' · IVA esclusa · poi rinnovo ' + (plan === 'year' ? 'ogni 1° gennaio' : 'il 1° di ogni mese') + '</small>';
+  }
+  P['/software/acquista'] = { title: 'Acquista', html: function (path) {
+    var sku = path.split('/').pop(), pr = PRODS[sku];
+    if (!pr) return P['404'].html();
+    var radios = pr.plans.map(function (pl, i) { return '<label><input type="radio" name="plan" value="' + pl + '"' + (i === pr.plans.length - 1 ? ' checked' : '') + '> ' + PLAN_LBL[pl].charAt(0).toUpperCase() + PLAN_LBL[pl].slice(1) + '</label>'; }).join('');
+    return head({ area: 'sof', crumbs: [['Home', '#/'], ['Software', '#/software'], ['Prodotti', '#/software/prodotti'], ['Acquista ' + pr.name]], eyebrow: 'Acquisto licenza', title: pr.name }) +
+      body('<div id="shopmsg"></div><form class="buy" data-sku="' + sku + '" novalidate>' +
+      '<fieldset><legend>Abbonamento</legend><div class="radios">' + radios + '</div><p class="note">' + (sku === 'ARF' ? 'Mensile: mese indivisibile, pagato in anticipo, rinnovo mensile. Annuale: anno solare intero, senza frazionamenti.' : 'Solo annuale: la licenza copre l\'anno solare intero, senza frazionamenti, e si rinnova ogni 1° gennaio.') + '</p></fieldset>' +
+      '<fieldset><legend>Dati del cliente</legend><div class="field"><label for="c-name">Ragione sociale / nome</label><input id="c-name" data-c="name" type="text" maxlength="200"></div>' +
+      '<div class="two"><div class="field"><label for="c-cf">Codice fiscale</label><input id="c-cf" data-c="cf" type="text" maxlength="16" autocapitalize="characters"></div>' +
+      '<div class="field"><label for="c-vat">Partita IVA (se diversa)</label><input id="c-vat" data-c="vat" type="text" maxlength="20"></div></div>' +
+      '<div class="field"><label for="c-addr">Sede legale</label><input id="c-addr" data-c="address" type="text" maxlength="300" autocomplete="street-address"></div>' +
+      '<div class="two"><div class="field"><label for="c-ref">Referente</label><input id="c-ref" data-c="ref" type="text" maxlength="200" autocomplete="name"></div>' +
+      '<div class="field"><label for="c-email">Email</label><input id="c-email" data-c="email" type="email" maxlength="200" autocomplete="email"></div></div>' +
+      '<div class="field"><label for="c-pec">PEC (facoltativa)</label><input id="c-pec" data-c="pec" type="email" maxlength="200"></div></fieldset>' +
+      '<fieldset><legend>Dichiarazione Operatori Finanziari</legend><p class="note">Elenca ogni Operatore Finanziario (soggetto giuridico con proprio codice fiscale) per cui usi il programma. Il prezzo è per numero di operatori.</p><div id="ops">' + opRow(0) + '</div>' +
+      '<div><button type="button" class="btn line" data-shop="addop">+ Aggiungi operatore</button></div></fieldset>' +
+      '<div class="tot" aria-live="polite"></div>' +
+      '<div class="check"><input id="a1" type="checkbox"><label for="a1">Dichiaro che i dati sopra sono veritieri e completi e accetto le <a href="#/condizioni" target="_blank">condizioni di licenza</a> e l\'<a href="#/privacy" target="_blank">informativa privacy</a>.</label></div>' +
+      '<div class="check"><input id="a2" type="checkbox"><label for="a2">Approvo specificamente, ai sensi degli artt. 1341 e 1342 c.c., le clausole su corrispettivi, anno solare senza frazionamenti, consegna dopo il pagamento integrale, rinnovo automatico e disdetta (artt. 8 e 9).</label></div>' +
+      '<p class="err" id="shoperr" role="alert"></p>' +
+      '<div><button class="btn sof" type="submit">Procedi al pagamento</button></div></form><div id="checkout" hidden></div>');
+  }, after: function () {
+    loadShop().then(function () {
+      calcTotal();
+      var m = main.querySelector('#shopmsg');
+      if (m && shop.state === 'off') m.innerHTML = '<p class="note warn"><strong>Anteprima.</strong> La vendita online non è ancora attiva su questo sito: il modulo si può compilare ma il pagamento si abilita con l\'apertura dell\'account di pagamento.</p>';
+    });
+    calcTotal();
+  } };
+  var ERR = { accettazione: 'Devi accettare le condizioni.', dati_cliente: 'Compila ragione sociale, sede legale e referente.', email: 'Email non valida.', cf_cliente: 'Codice fiscale del cliente non valido.', operatori: 'Indica almeno un Operatore Finanziario.',
+    cf_operatore: 'Codice fiscale non valido per un operatore', cf_duplicato: 'Codice fiscale ripetuto', non_configurato: 'Vendita online non ancora attiva.' };
+  var CFRE = /^([A-Z]{6}\d{2}[A-Z]\d{2}[A-Z]\d{3}[A-Z]|\d{11})$/;
+  function startCheckout(f) {
+    var err = f.querySelector('#shoperr'); err.textContent = '';
+    var company = {}; Array.prototype.forEach.call(f.querySelectorAll('[data-c]'), function (i) { company[i.getAttribute('data-c')] = i.value.trim(); });
+    var ops = Array.prototype.map.call(f.querySelectorAll('.opr'), function (r) { return { name: r.querySelector('[data-op=name]').value.trim(), cf: r.querySelector('[data-op=cf]').value.trim().toUpperCase().replace(/\s/g, '') }; });
+    if (!company.name || !company.address || !company.ref) { err.textContent = ERR.dati_cliente; return; }
+    if (!CFRE.test(company.cf.toUpperCase().replace(/\s/g, ''))) { err.textContent = ERR.cf_cliente; return; }
+    for (var i = 0; i < ops.length; i++) { if (!ops[i].name || !CFRE.test(ops[i].cf)) { err.textContent = 'Operatore ' + (i + 1) + ': denominazione e codice fiscale validi sono obbligatori.'; return; } }
+    if (!f.querySelector('#a1').checked || !f.querySelector('#a2').checked) { err.textContent = ERR.accettazione; return; }
+    var btn = f.querySelector('button[type=submit]'); btn.disabled = true;
+    loadShop().then(function () {
+      if (shop.state !== 'ok' || !shop.pk) throw Object.assign(new Error('off'), { code: 'non_configurato' });
+      return api('checkout', { body: { sku: f.getAttribute('data-sku'), plan: f.querySelector('input[name=plan]:checked').value, company: company, operators: ops, accept: true, termsVersion: TERMS_VERSION } });
+    }).then(function (r) {
+      return loadScript('https://js.stripe.com/v3/').then(function () {
+        var S = window.Stripe(shop.pk); var fn = S.initEmbeddedCheckout || S.createEmbeddedCheckoutPage;
+        return Promise.resolve(fn.call(S, { fetchClientSecret: function () { return Promise.resolve(r.clientSecret); } }));
+      });
+    }).then(function (c) {
+      f.hidden = true; var box = main.querySelector('#checkout'); box.hidden = false; c.mount('#checkout'); box.scrollIntoView({ behavior: 'smooth' });
+    }).catch(function (e) {
+      btn.disabled = false;
+      err.textContent = (ERR[e.code] || 'Non è stato possibile avviare il pagamento. Riprova più tardi.') + (e.detail && ERR[e.code] ? ' (' + e.detail + ')' : '');
+    });
+  }
+  function loadScript(src) {
+    return new Promise(function (ok, ko) {
+      if (window.Stripe) return ok();
+      var s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = ko; document.head.appendChild(s);
+    });
+  }
+  main.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-shop]'); if (!b) return;
+    var act = b.getAttribute('data-shop'), f = main.querySelector('form.buy');
+    if (act === 'addop') { main.querySelector('#ops').insertAdjacentHTML('beforeend', opRow()); calcTotal(); }
+    else if (act === 'delop') { if (f.querySelectorAll('.opr').length > 1) { b.closest('.opr').remove(); calcTotal(); } }
+    else if (act === 'dl') { api('download?licence=' + encodeURIComponent(b.getAttribute('data-id')), { auth: true }).then(function (j) { location.href = j.url; }, function (er) { alert(er.code === 'licenza_non_attiva' ? 'La licenza non è attiva.' : 'File non ancora disponibile.'); }); }
+    else if (act === 'portal') { api('portal', { auth: true, body: { licence: b.getAttribute('data-id') } }).then(function (j) { location.href = j.url; }, function () { alert('Servizio non disponibile.'); }); }
+    else if (act === 'cancel' || act === 'resume') {
+      var when = b.getAttribute('data-when');
+      if (act === 'cancel' && !confirm('Confermi la disdetta? La licenza resterà valida fino al ' + fmt(when.slice(0, 10)) + ' (secondo i termini contrattuali).')) return;
+      api('cancel', { auth: true, body: { licence: b.getAttribute('data-id'), action: act } }).then(function () { renderAccount(); }, function () { alert('Operazione non riuscita.'); });
+    }
+  });
+  main.addEventListener('change', function (e) { if (e.target.name === 'plan') calcTotal(); });
+  main.addEventListener('submit', function (e) {
+    var f = e.target.closest('form.buy'); if (f) { e.preventDefault(); startCheckout(f); return; }
+    var l = e.target.closest('form.login');
+    if (l) { e.preventDefault(); var em = l.querySelector('input').value.trim();
+      api('account-link', { body: { email: em } }).then(function () { l.innerHTML = '<p class="note warn">Se l\'indirizzo risulta tra i clienti, riceverai a breve un link di accesso valido 2 ore.</p>'; }, function () { l.querySelector('.err').textContent = 'Controlla l\'indirizzo email e riprova.'; }); }
+  });
+
+  P['/grazie'] = { title: 'Grazie', html: function () {
+    return head({ area: 'sof', crumbs: [['Home', '#/'], ['Grazie']], eyebrow: 'Ordine', title: 'Grazie per l\'acquisto.' }) +
+      body('<div class="prose"><p>Stiamo confermando il pagamento. A conferma avvenuta riceverai via email la <strong>chiave di licenza</strong> e le istruzioni; il programma si scarica dall\'area clienti.</p><p class="note">Il programma e la chiave vengono consegnati solo dopo il pagamento integrale. Se l\'email non arriva entro pochi minuti, controlla la cartella spam o <a href="#/contatti">scrivici</a>.</p><div class="cta"><a class="btn sof" href="#/account">Vai all\'area clienti</a></div></div>');
+  } };
+
+  function acctToken() { try { return sessionStorage.getItem('gm-acct'); } catch (e) { return null; } }
+  function hashQuery() { var h = location.hash, i = h.indexOf('?'); return i < 0 ? '' : h.slice(i + 1); }
+  var ST = { active: 'Attiva', trialing: 'Attiva', past_due: 'Pagamento in ritardo', unpaid: 'Sospesa', canceled: 'Cessata', ended: 'Cessata', suspended: 'Sospesa' };
+  function renderAccount() {
+    var box = main.querySelector('#acct'); if (!box) return;
+    api('account', { auth: true }).then(function (j) {
+      if (!j.licences.length) { box.innerHTML = '<p class="note">Nessuna licenza trovata.</p>'; return; }
+      box.innerHTML = '<p class="note">Accesso come ' + escH(j.email) + ' · <button type="button" class="mini" id="logout">Esci</button></p>' + j.licences.map(function (l) {
+        var active = l.status === 'active' || l.status === 'trialing';
+        return '<div class="lic"><h3>' + escH(l.sku) + ' <span class="st">' + escH(ST[l.status] || l.status) + '</span></h3>' +
+          '<p>Abbonamento ' + PLAN_LBL[l.plan] + ' · ' + l.operators.length + ' Operatore/i Finanziario/i · ' + escH(l.company) + '</p>' +
+          '<p>Chiave di licenza:<br><code>' + escH(l.key) + '</code></p>' +
+          '<ul>' + l.operators.map(function (o) { return '<li>' + escH(o.name) + ' – ' + escH(o.cf) + '</li>'; }).join('') + '</ul>' +
+          '<p class="note">' + (l.endsAt ? 'Disdetta registrata: licenza valida fino al ' + fmt(l.endsAt.slice(0, 10)) + '.' : (l.nextRenewal ? 'Prossimo rinnovo: ' + fmt(l.nextRenewal.slice(0, 10)) + '.' : '')) + '</p>' +
+          '<div class="acts">' + (active ? '<button class="btn sof" data-shop="dl" data-id="' + l.id + '">Scarica programma</button>' : '') +
+          '<button class="btn line" data-shop="portal" data-id="' + l.id + '">Metodo di pagamento e fatture</button>' +
+          (active ? (l.endsAt ? '<button class="btn line" data-shop="resume" data-id="' + l.id + '">Annulla disdetta</button>' : '<button class="btn line" data-shop="cancel" data-id="' + l.id + '" data-when="' + l.cancelIfNow + '">Disdici</button>') : '') + '</div>' +
+          '<p class="note">Disdetta: licenza annuale entro il 30 novembre (effetto 1° gennaio); ARF mensile entro il 15 del mese (effetto a fine mese). Oltre i termini, il rapporto prosegue per il periodo successivo.</p></div>';
+      }).join('');
+      var lo = box.querySelector('#logout'); if (lo) lo.onclick = function () { try { sessionStorage.removeItem('gm-acct'); } catch (e) {} renderAccount(); };
+    }, function () {
+      try { sessionStorage.removeItem('gm-acct'); } catch (e) {}
+      box.innerHTML = '<form class="login formwrap"><div class="field"><label for="l-email">Email usata per l\'acquisto</label><input id="l-email" type="email" required autocomplete="email"></div><p class="err"></p><div><button class="btn line" type="submit">Ricevi link di accesso</button></div></form>';
+    });
+  }
+  P['/account'] = { title: 'Area clienti', html: function () {
+    var t = new URLSearchParams(hashQuery()).get('t');
+    if (t) { try { sessionStorage.setItem('gm-acct', t); } catch (e) {} history.replaceState(null, '', location.pathname + location.search + '#/account'); }
+    return head({ area: 'sof', crumbs: [['Home', '#/'], ['Area clienti']], eyebrow: 'Area clienti', title: 'Le tue licenze', lead: 'Chiavi, download, rinnovi e disdetta.' }) + body('<div id="acct"><p class="note">Caricamento…</p></div>');
+  }, after: function () { renderAccount(); } };
+
+  legal('condizioni', 'Condizioni di licenza', '<p class="note warn"><strong>Bozza di sintesi, da validare con il consulente legale.</strong> Il testo vincolante è il Contratto di licenza con i relativi Allegati (A: condizioni economiche; B: Dichiarazione Operatori).</p>' +
+    '<h2>Corrispettivi</h2><p>Il corrispettivo è dovuto per ciascun Operatore Finanziario (soggetto giuridico con proprio codice fiscale): prezzo unitario × numero di Operatori dichiarati. Gli utenti sono illimitati. I corrispettivi sono al netto di IVA.</p>' +
+    '<h2>Durata e rinnovo</h2><p>Licenza annuale: copre l\'anno solare intero, senza frazionamenti né rimborsi parziali; termina il 31 dicembre e si rinnova automaticamente dal 1° gennaio. ARF mensile: mese indivisibile, pagato in anticipo, rinnovo mensile.</p>' +
+    '<h2>Consegna</h2><p>Chiave di licenza e programma sono consegnati solo dopo il pagamento integrale.</p>' +
+    '<h2>Disdetta</h2><p>Licenza annuale: entro il 30 novembre, con effetto dal 1° gennaio. ARF mensile: entro il 15 del mese, con effetto a fine mese; oltre tale data, a fine del mese successivo.</p>' +
+    '<h2>Dichiarazione Operatori</h2><p>Il cliente dichiara l\'elenco degli Operatori Finanziari per cui usa il programma e comunica ogni variazione; il corrispettivo si adegua al numero di Operatori.</p>');
   sofSub('sviluppo', 'Sviluppo su misura', 'GM realizza applicazioni e strumenti per conto di imprese e professionisti.',
     '<ol class="steps"><li><strong>Analisi</strong><span>Capiamo il processo da supportare e cosa serve davvero.</span></li><li><strong>Prototipo</strong><span>Una prima versione da provare e correggere insieme.</span></li><li><strong>Rilascio</strong><span>Messa in uso, con la documentazione necessaria.</span></li><li><strong>Manutenzione</strong><span>Aggiornamenti e assistenza dopo la consegna.</span></li></ol>');
   sofSub('consulenza', 'Consulenza informatica', 'Servizi di consulenza per capire cosa automatizzare e con quali strumenti.',
@@ -990,14 +1199,14 @@ html[data-pal="f"] .studio { background: transparent; }
 
   /* ---------- router ---------- */
   function currentPath() {
-    var h = location.hash.replace(/^#/, '') || '/';
+    var h = location.hash.replace(/^#/, '').replace(/\?.*$/, '') || '/';
     return h.length > 1 ? h.replace(/\/+$/, '') : h;
   }
   function render() {
     var path = currentPath();
-    var page = P[path] || P['404'];
+    var page = P[path] || (path.indexOf('/software/acquista/') === 0 ? P['/software/acquista'] : null) || P['404'];
     if (!SHOW_SOFTWARE && path.indexOf('/software') === 0) page = P['404'];
-    main.innerHTML = page.html();
+    main.innerHTML = page.html(path);
     document.title = (page.title ? page.title + ' · ' : '') + 'GM · ' + SITE;
     window.scrollTo(0, 0);
     var h1 = main.querySelector('h1');
@@ -1006,6 +1215,7 @@ html[data-pal="f"] .studio { background: transparent; }
       if (a.getAttribute('href') === '#' + path) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
     });
     applyConsent();
+    if (page.after) page.after(path);
   }
 
   /* ---------- menu ---------- */
