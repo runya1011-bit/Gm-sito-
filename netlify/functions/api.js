@@ -149,9 +149,9 @@ function memory() {
   return { get: async (k) => (m.has(k) ? JSON.parse(m.get(k)) : null), set: async (k, v) => { m.set(k, JSON.stringify(v)); }, _m: m };
 }
 function blobs() {
-  const { getStore } = require('@netlify/blobs');
-  const s = getStore('gm-shop');
-  return { get: async (k) => s.get(k, { type: 'json' }), set: async (k, v) => { await s.setJSON(k, v); } };
+  let s = null; // connessione creata solo al primo uso
+  const st = () => (s = s || require('@netlify/blobs').getStore('gm-shop'));
+  return { get: async (k) => st().get(k, { type: 'json' }), set: async (k, v) => { await st().setJSON(k, v); } };
 }
 module.exports = { memory, blobs };
 
@@ -454,5 +454,6 @@ exports.handler = async (event, context) => {
   const src = (event.rawUrl || '') + ' ' + (event.path || '');
   const m = /\/(catalogo|checkout|stripe-webhook|account-link|account|download|cancel|portal)(?=[/?\s]|$)/.exec(src);
   if (!m) return { statusCode: 404, body: '{"error":"rotta"}' };
+  try { require('@netlify/blobs').connectLambda(event); } catch (e) { /* senza Blobs: solo le rotte che non lo usano */ }
   return __req(m[1]).handler(event, context);
 };
